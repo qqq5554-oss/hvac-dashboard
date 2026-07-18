@@ -3,18 +3,16 @@
 // 校正方式參考 UT9660 冰水主機性能量測 Excel（三杰 SJCL-115030221-01 校正報告）：
 // 器示 = slope × 真值 + intercept  →  真值 = (器示 − intercept) / slope
 //
-// Excel 原始校正常數（同一批溫度感測器的參考值，僅供預設帶入，實際仍須以
-// 現場感測器校正報告為準）：
-//   T1（回水類通道）：slope = 1.002,  intercept = -0.4899
-//   T2（供水類通道）：slope = 1.0035, intercept = -0.4513
+// 依使用者確認，此校正報告對應「冷卻水」迴路（同 Excel「情境A：校正冷卻水」），
+// 冰水側維持原始讀值不校正，因此預設啟用、且只對冷卻水 2 個通道套用：
+//   T1（冷卻水回水／進水，冷）：slope = 1.002,  intercept = -0.4899
+//   T2（冷卻水出水，熱）    ：slope = 1.0035, intercept = -0.4513
 (function () {
-  const STORAGE_KEY = "hvac_temp_calibration_v1";
+  const STORAGE_KEY = "hvac_temp_calibration_v2";
 
   const DEFAULT_CALIBRATION = {
-    enabled: false,
+    enabled: true,
     channels: {
-      chilled_temp_supply: { label: "冰水出水溫", slope: 1.0035, intercept: -0.4513 },
-      chilled_temp_return: { label: "冰水回水溫", slope: 1.002, intercept: -0.4899 },
       cooling_temp_supply: { label: "冷卻水出水溫", slope: 1.0035, intercept: -0.4513 },
       cooling_temp_return: { label: "冷卻水回水溫", slope: 1.002, intercept: -0.4899 },
     },
