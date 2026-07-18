@@ -77,6 +77,7 @@
       const coolingM = Metrics.computeCooling({ flow: coolingFlow, supply: coolingSupply, ret: coolingReturn });
 
       $("chilledDeltaT").textContent = fmt(chilledM.deltaT);
+      $("chilledQ").textContent = fmt(chilledM.q, 0);
       $("chilledRT").textContent = fmt(chilledM.rt, 0);
       $("coolingDeltaT").textContent = fmt(coolingM.deltaT);
       $("coolingQ").textContent = fmt(coolingM.q, 0);
