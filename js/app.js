@@ -28,7 +28,7 @@
 
   async function ensureAuth() {
     if (!token) token = await Api.getPublicToken(cfg);
-    if (!deviceId) deviceId = await Api.resolveDeviceId(cfg, token);
+    if (!deviceId) deviceId = cfg.DEVICE_ID;
   }
 
   async function withAuthRetry(fn) {

@@ -7,19 +7,39 @@ HVAC 冰水冷卻水遠端監控儀表板
 
 ## 部署前設定
 
-編輯 `js/config.js`：
+`js/config.js` 裡的 `PUBLIC_ID` 與 `DEVICE_ID` 已依實際 ThingsBoard 後台設定填好，
+可直接部署使用。若要換一台設備、或在別的 ThingsBoard 租戶重建，請照以下步驟
+（本專案使用的是 **ThingsBoard Cloud Professional Edition**，跟社群版 CE 的
+「Public Customer」設定方式不同，經實測整理如下）：
+
+1. **Devices → 開啟目標設備 → 「Copy device Id」**，記下 Device ID。
+2. **Devices → Groups 分頁**，勾選 `All` 群組（或另建一個只放此設備的群組）
+   最右邊的 **Public** 核取方塊。這會讓 ThingsBoard 自動建立/使用內建的
+   `Public` 系統客戶。
+   - ⚠️ 若之後這個 Tenant 會加入其他不想公開的設備，建議改成另建一個
+     專用群組，只把要公開的設備放進去再勾 Public，避免整個 `All` 群組被公開。
+   - ⚠️ 若透過「Manage owner and groups」把設備的 Owner 改指派給某個
+     Customer，設備會離開 Tenant 層級的群組，導致上面設的 Public 群組
+     權限失效（找不到設備遙測）。維持設備 Owner 為 **Tenant** 本身即可。
+3. **Customers → All**，這時應該會多一筆 Title 為 `Public` 的客戶（系統自動建立）。
+   點進去 → **「Copy customer Id」**，這就是 `PUBLIC_ID`。
+4. 確認 Public 群組使用的角色（Permissions 分頁 → `Entity Group Public User`）
+   已包含 `Read`、`Read Attributes`、`Read Telemetry` 操作（ThingsBoard 自動產生
+   的角色預設就有，通常不用調整）。
+5. 把 `PUBLIC_ID` 與 `DEVICE_ID` 填入 `js/config.js`：
 
 ```js
 window.HVAC_CONFIG = {
   THINGSBOARD_HOST: "https://thingsboard.cloud",
-  PUBLIC_ID: "REPLACE_WITH_PUBLIC_CUSTOMER_ID", // 換成 ThingsBoard 後台的 Public Customer ID
-  DEVICE_NAME: "ECU-1051",
+  PUBLIC_ID: "從步驟 3 複製的 customer Id",
+  DEVICE_ID: "從步驟 1 複製的 device Id",
   ...
 };
 ```
 
-`PUBLIC_ID` 的取得方式請參照專案規格文件第 5 節（Customer → Public 分頁 → 記下 Public ID，
-並將 `ECU-1051` 設備指派給該 Public Customer）。此 ID 公開亦無妨——僅能唯讀存取被指派的設備。
+這兩個 ID 公開亦無妨——`PUBLIC_ID` 只能唯讀存取被設為公開的群組內容，
+`DEVICE_ID` 也不是可寫入的憑證。真正的 Device Access Token 完全不會出現在
+前端程式碼裡。
 
 設定完成後，將整個目錄部署到 GitHub Pages 或任何靜態網站空間即可使用，無需 build step。
 

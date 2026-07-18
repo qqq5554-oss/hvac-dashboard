@@ -1,21 +1,13 @@
 // ThingsBoard REST 客戶端
 // 採用「Public Customer + Public Login」方案（規格文件第 5、6 節），
 // 前端只保存公開的 Public Customer ID，不會出現任何可寫入的 Device Token。
+//
+// 注意：此 ThingsBoard 環境為 Professional Edition，Public 權限是透過
+// 「Device Group → Make public」授予的群組權限，不包含查詢
+// 「/api/customer/{customerId}/devices」（客戶底下設備清單）的權限，
+// 因此本檔案不做設備自動查詢，deviceId 直接使用 config.js 裡設定的
+// DEVICE_ID（固定值，可用 ThingsBoard 後台「Copy device Id」取得）。
 (function () {
-  const DEVICE_CACHE_KEY = "hvac_device_id_v1";
-
-  function decodeJwtPayload(token) {
-    const payload = token.split(".")[1];
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const json = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
-        .join("")
-    );
-    return JSON.parse(json);
-  }
-
   async function getPublicToken(cfg) {
     const res = await fetch(`${cfg.THINGSBOARD_HOST}/api/auth/login/public`, {
       method: "POST",
@@ -25,26 +17,6 @@
     if (!res.ok) throw new Error(`公開登入失敗 (${res.status})`);
     const data = await res.json();
     return data.token;
-  }
-
-  async function resolveDeviceId(cfg, token) {
-    const cached = localStorage.getItem(DEVICE_CACHE_KEY);
-    if (cached) return cached;
-
-    const { customerId } = decodeJwtPayload(token);
-    if (!customerId) throw new Error("Token 內無 customerId，無法查詢設備");
-
-    const res = await fetch(
-      `${cfg.THINGSBOARD_HOST}/api/customer/${customerId}/devices?pageSize=50&page=0`,
-      { headers: { "X-Authorization": `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error(`查詢設備清單失敗 (${res.status})`);
-    const data = await res.json();
-    const device = (data.data || []).find((d) => d.name === cfg.DEVICE_NAME);
-    if (!device) throw new Error(`找不到名稱為 ${cfg.DEVICE_NAME} 的設備`);
-
-    localStorage.setItem(DEVICE_CACHE_KEY, device.id.id);
-    return device.id.id;
   }
 
   async function getLatestTelemetry(cfg, token, deviceId) {
@@ -93,7 +65,6 @@
 
   window.HVACApi = {
     getPublicToken,
-    resolveDeviceId,
     getLatestTelemetry,
     getHistoryTelemetry,
   };
