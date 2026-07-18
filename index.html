@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HVAC 遠端監控儀表板</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>HVAC 監控系統</h1>
+    <div class="status" id="connStatus">
+      <span class="dot" id="connDot"></span>
+      <span id="connText">連線中…</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="range-bar" aria-label="趨勢圖時間範圍">
+      <span class="range-label">趨勢圖範圍：</span>
+      <div class="range-buttons" id="rangeButtons"></div>
+    </section>
+
+    <section class="loop-section" aria-labelledby="chilledTitle">
+      <h2 id="chilledTitle">冰水側</h2>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-label">流量</div>
+          <div class="card-value"><span id="chilledFlow">--</span><span class="unit">L/min</span></div>
+        </div>
+        <div class="card">
+          <div class="card-label">出水溫</div>
+          <div class="card-value"><span id="chilledSupply">--</span><span class="unit">℃</span></div>
+        </div>
+        <div class="card">
+          <div class="card-label">回水溫</div>
+          <div class="card-value"><span id="chilledReturn">--</span><span class="unit">℃</span></div>
+        </div>
+        <div class="card card-derived">
+          <div class="card-label">ΔT / 冷凍能力</div>
+          <div class="card-value derived">
+            <span id="chilledDeltaT">--</span><span class="unit">℃</span>
+            ・<span id="chilledRT">--</span><span class="unit">RT</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-box">
+          <div class="chart-title">冰水流量趨勢</div>
+          <div class="chart-wrap"><canvas id="chartChilledFlow"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">冰水溫度趨勢（出水／回水）</div>
+          <div class="chart-wrap"><canvas id="chartChilledTemp"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="loop-section" aria-labelledby="coolingTitle">
+      <h2 id="coolingTitle">冷卻水側</h2>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-label">流量</div>
+          <div class="card-value"><span id="coolingFlow">--</span><span class="unit">L/min</span></div>
+        </div>
+        <div class="card">
+          <div class="card-label">出水溫</div>
+          <div class="card-value"><span id="coolingSupply">--</span><span class="unit">℃</span></div>
+        </div>
+        <div class="card">
+          <div class="card-label">回水溫</div>
+          <div class="card-value"><span id="coolingReturn">--</span><span class="unit">℃</span></div>
+        </div>
+        <div class="card card-derived">
+          <div class="card-label">ΔT / 冷凝熱</div>
+          <div class="card-value derived">
+            <span id="coolingDeltaT">--</span><span class="unit">℃</span>
+            ・<span id="coolingQ">--</span><span class="unit">kW</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-box">
+          <div class="chart-title">冷卻水流量趨勢</div>
+          <div class="chart-wrap"><canvas id="chartCoolingFlow"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">冷卻水溫度趨勢（出水／回水）</div>
+          <div class="chart-wrap"><canvas id="chartCoolingTemp"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="loop-section" aria-labelledby="perfTitle">
+      <h2 id="perfTitle">系統效能比較</h2>
+      <div class="chart-grid">
+        <div class="chart-box">
+          <div class="chart-title">ΔT 比較（冰水／冷卻水）</div>
+          <div class="chart-wrap"><canvas id="chartDeltaTCompare"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">換算能力比較（冷凍能力 Q冷／冷凝熱 Q熱）</div>
+          <div class="chart-wrap"><canvas id="chartQCompare"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <details class="settings-panel" id="calibrationPanel">
+      <summary>溫度校正設定</summary>
+      <p class="settings-note">
+        校正方式：真值 = (器示 − intercept) / slope，slope/intercept 預設值取自
+        UT9660 冰水主機性能量測報告（三杰 SJCL-115030221-01）之校正曲線，僅供參考，
+        請依實際感測器校正報告核對後調整。
+      </p>
+      <label class="toggle-row">
+        <input type="checkbox" id="calEnabled" />
+        啟用溫度校正
+      </label>
+      <table class="cal-table" id="calTable">
+        <thead>
+          <tr><th>通道</th><th>slope</th><th>intercept</th></tr>
+        </thead>
+        <tbody id="calTableBody"></tbody>
+      </table>
+      <div class="settings-actions">
+        <button type="button" id="calSave">儲存</button>
+        <button type="button" id="calReset">還原預設值</button>
+      </div>
+    </details>
+  </main>
+
+  <footer>
+    <span id="lastUpdate">最後更新時間：--</span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/calibration.js"></script>
+  <script src="js/metrics.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
