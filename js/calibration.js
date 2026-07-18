@@ -4,17 +4,19 @@
 // 器示 = slope × 真值 + intercept  →  真值 = (器示 − intercept) / slope
 //
 // 依使用者確認，此校正報告對應「冷卻水」迴路（同 Excel「情境A：校正冷卻水」），
-// 冰水側維持原始讀值不校正，因此預設啟用、且只對冷卻水 2 個通道套用：
-//   T1（冷卻水回水／進水，冷）：slope = 1.002,  intercept = -0.4899
-//   T2（冷卻水出水，熱）    ：slope = 1.0035, intercept = -0.4513
+// 冰水側維持原始讀值不校正，因此預設啟用、且只對冷卻水 2 個通道套用。
+// 注意：T1/T2 對應哪一個通道，Excel 原始報告本身也標註「歸屬未定」，
+// 這裡先對調試看看（出水用 T1、回水用 T2），比較跟原本配置的差異：
+//   出水：slope = 1.002,  intercept = -0.4899   （原為 T2，現改用 T1）
+//   回水：slope = 1.0035, intercept = -0.4513   （原為 T1，現改用 T2）
 (function () {
-  const STORAGE_KEY = "hvac_temp_calibration_v2";
+  const STORAGE_KEY = "hvac_temp_calibration_v3";
 
   const DEFAULT_CALIBRATION = {
     enabled: true,
     channels: {
-      cooling_temp_supply: { label: "冷卻水出水溫", slope: 1.0035, intercept: -0.4513 },
-      cooling_temp_return: { label: "冷卻水回水溫", slope: 1.002, intercept: -0.4899 },
+      cooling_temp_supply: { label: "冷卻水出水溫", slope: 1.002, intercept: -0.4899 },
+      cooling_temp_return: { label: "冷卻水回水溫", slope: 1.0035, intercept: -0.4513 },
     },
   };
 
