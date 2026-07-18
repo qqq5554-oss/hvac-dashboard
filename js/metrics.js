@@ -7,6 +7,8 @@
 // 有效範圍濾除流量斷訊/脈衝與溫度瞬跳（同 Excel 時序對齊數據 K/M 欄邏輯）：
 //   冰水：flow ≥ 100 LPM 且 0.2 < ΔT < 12℃ 才計入
 //   冷卻水：flow ≥ 100 LPM 且 0.05 < ΔT < 8℃ 才計入
+// ΔT 一律取絕對值（同 Excel「五、資料品質備註」【溫度標籤反置】的處理方式），
+// 現場常見出水/回水標籤與實際管路接反，取絕對值後計算不受影響。
 (function () {
   const RHO = 1.0; // kg/L
   const CP = 4.186; // kJ/kg·K
@@ -17,7 +19,7 @@
   }
 
   function computeChilled({ flow, supply, ret }) {
-    const deltaT = isNum(supply) && isNum(ret) ? ret - supply : null;
+    const deltaT = isNum(supply) && isNum(ret) ? Math.abs(ret - supply) : null;
     let q = null;
     if (isNum(flow) && flow >= 100 && isNum(deltaT) && deltaT > 0.2 && deltaT < 12) {
       q = (flow / 60) * RHO * CP * deltaT;
@@ -27,8 +29,7 @@
   }
 
   function computeCooling({ flow, supply, ret }) {
-    // ΔT冷卻 = 出水(熱) − 回水(冷)
-    const deltaT = isNum(supply) && isNum(ret) ? supply - ret : null;
+    const deltaT = isNum(supply) && isNum(ret) ? Math.abs(supply - ret) : null;
     let q = null;
     if (isNum(flow) && flow >= 100 && isNum(deltaT) && deltaT > 0.05 && deltaT < 8) {
       q = (flow / 60) * RHO * CP * deltaT;
